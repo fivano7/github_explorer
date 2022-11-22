@@ -4,10 +4,11 @@ import RepoList from "../components/repos/RepoList";
 import { useParams, Link } from "react-router-dom";
 import Spinner from "../components/layout/Spinner";
 import GithubContext from "../context/github/GithubContext";
+import {getUserAndRepos} from "../context/github/GithubActions";
 
 //User page
 function User() {
-  const { getUser, user, loading, getUserRepos, repos } =
+  const {user, loading, repos, dispatch} =
     useContext(GithubContext);
 
   const {
@@ -30,12 +31,16 @@ function User() {
   const params = useParams();
 
   useEffect(() => {
-    
-    getUser(params.login);
-    getUserRepos(params.login);
-    //za micanje "React Hook useEffect has missing dependencies" warninga iz konzole
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); //bez [] se ovo vrti u loopu
+    //useEffect ne može imati async await pa u njemu kreiramo i zovemo funkciju
+    dispatch({type: "SET_LOADING"})
+
+    const getUserData = async() => {
+      const userAndReposData = await getUserAndRepos(params.login)
+      dispatch({type: "SET_USER_AND_REPOS", payload: userAndReposData})
+    }
+
+    getUserData()
+  }, [dispatch, params.login]); 
 
   if (loading) {
     return <Spinner />;
